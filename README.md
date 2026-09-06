@@ -62,7 +62,11 @@ Git Delivery 会检查工作区、生成逻辑提交计划、按明确文件分�
 
 ### 方式一：直接从 GitHub 接入（推荐）
 
-要求：已安装 Codex CLI，并已在 Codex 中完成登录。
+要求：已安装 Codex CLI。首次使用先登录：
+
+```powershell
+codex login
+```
 
 1. 添加这个仓库提供的 marketplace：
 
@@ -76,9 +80,21 @@ Git Delivery 会检查工作区、生成逻辑提交计划、按明确文件分�
    codex plugin marketplace list
    ```
 
-3. 在 Codex Desktop 的 Plugins Directory 中选择 `Project Workflow`，安装 `Codex Project Factory`。
+3. 安装插件。命令行方式最直接：
 
-4. 打开一个软件项目仓库，在 Codex 对话中输入：
+   ```powershell
+   codex plugin add codex-project-factory@project-workflow
+   ```
+
+   也可以在 Codex Desktop 的 Plugins Directory 中选择 `Project Workflow`，安装 `Codex Project Factory`。
+
+4. 确认插件已经安装：
+
+   ```powershell
+   codex plugin list --marketplace project-workflow
+   ```
+
+5. 打开一个软件项目仓库，在 Codex 对话中输入：
 
    ```text
    使用项目工作流
@@ -90,7 +106,7 @@ Git Delivery 会检查工作区、生成逻辑提交计划、按明确文件分�
    /project-factory
    ```
 
-5. 需求访谈结束后，检查生成的 `docs/requirements/REQUIREMENTS_FROZEN.md`，确认无误时回复：
+6. 需求访谈结束后，检查生成的 `docs/requirements/REQUIREMENTS_FROZEN.md`，确认无误时回复：
 
    ```text
    确认需求
@@ -109,7 +125,8 @@ codex plugin marketplace upgrade project-workflow
 ```powershell
 git clone https://github.com/Changxin-YR/Project-workflow.git
 codex plugin marketplace add .\Project-workflow
-codex plugin marketplace list
+codex plugin add codex-project-factory@project-workflow
+codex plugin list --marketplace project-workflow
 ```
 
 这种方式适合需要审阅或修改 Skill 的团队。修改仓库后重新执行 `codex plugin marketplace upgrade project-workflow`，再重启 Codex Desktop。
@@ -119,22 +136,42 @@ codex plugin marketplace list
 Codex 当前没有把 npm registry 作为原生插件安装源；npm 适合用来下载这份 GitHub 包，再把解包目录接入 marketplace。无需 npm 账号即可执行：
 
 ```powershell
+$installRoot = Join-Path $env:TEMP "codex-project-factory-install"
+Remove-Item -Recurse -Force $installRoot -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force $installRoot | Out-Null
+Push-Location $installRoot
 $archive = npm pack github:Changxin-YR/Project-workflow --silent
 tar -xzf $archive
-codex plugin marketplace add .\package
-codex plugin marketplace list
+codex plugin marketplace add (Join-Path $installRoot "package")
+codex plugin add codex-project-factory@project-workflow
+codex plugin list --marketplace project-workflow
+Pop-Location
 ```
 
 macOS/Linux：
 
 ```bash
+install_root="$(mktemp -d)"
+cd "$install_root"
 archive=$(npm pack github:Changxin-YR/Project-workflow --silent)
 tar -xzf "$archive"
-codex plugin marketplace add ./package
-codex plugin marketplace list
+codex plugin marketplace add "$install_root/package"
+codex plugin add codex-project-factory@project-workflow
+codex plugin list --marketplace project-workflow
 ```
 
-仓库已经包含 `package.json`，因此也可以用 `npm pack` 生成可分发的 tarball。只有将包发布到 npm registry 后，`npm install codex-project-factory` 才会成为可用的 registry 安装命令；当前版本未宣称已发布。
+这条路径不需要 npm 账号，npm 只负责从 GitHub 下载并打包源码；`codex plugin marketplace add` 负责把解包目录注册给 Codex。仓库已经包含 `package.json`，也可以在仓库目录执行 `npm pack` 生成可分发的 tarball。当前版本尚未发布到 npm registry，因此下面的命令目前不可用：
+
+```text
+npm install codex-project-factory
+```
+
+更新插件时，重新执行对应下载步骤，然后执行：
+
+```powershell
+codex plugin marketplace upgrade project-workflow
+codex plugin list --marketplace project-workflow
+```
 
 Codex 插件目录、manifest 和 marketplace 的官方说明见：[Package your plugin - OpenAI Developers](https://developers.openai.com/plugins/build/plugins)。
 
