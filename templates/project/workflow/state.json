@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "phase": "INIT",
+  "status": "READY",
+  "requirementsVersion": "1.0",
+  "requirementsFrozen": false,
+  "currentModule": null,
+  "completedModules": [],
+  "failedGate": null,
+  "retryCount": 0,
+  "lastGoodCommit": null,
+  "gitDelivery": {
+    "repositoryDetected": null,
+    "remoteDetected": null,
+    "securityScan": "PENDING",
+    "commitPlan": "PENDING",
+    "commitsCompleted": false,
+    "finalTest": "PENDING",
+    "remoteVerify": "PENDING",
+    "push": "PENDING",
+    "branch": null,
+    "head": null
+  }
+}
