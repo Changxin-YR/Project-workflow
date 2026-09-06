@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schemaVersion", "phase", "status", "requirementsFrozen", "gitDelivery"],
+  "properties": {
+    "schemaVersion": {"type": "integer", "const": 1},
+    "phase": {"type": "string"},
+    "status": {"type": "string"},
+    "requirementsVersion": {"type": "string"},
+    "requirementsFrozen": {"type": "boolean"},
+    "currentModule": {"type": ["string", "null"]},
+    "completedModules": {"type": "array", "items": {"type": "string"}},
+    "failedGate": {"type": ["string", "null"]},
+    "retryCount": {"type": "integer", "minimum": 0},
+    "lastGoodCommit": {"type": ["string", "null"]},
+    "gitDelivery": {
+      "type": "object",
+      "required": ["repositoryDetected", "remoteDetected", "securityScan", "commitPlan", "commitsCompleted", "finalTest", "remoteVerify", "push", "branch", "head"],
+      "properties": {
+        "repositoryDetected": {"type": ["boolean", "null"]},
+        "remoteDetected": {"type": ["boolean", "null"]},
+        "securityScan": {"type": "string"},
+        "commitPlan": {"type": "string"},
+        "commitsCompleted": {"type": "boolean"},
+        "finalTest": {"type": "string"},
+        "remoteVerify": {"type": "string"},
+        "push": {"type": "string"},
+        "branch": {"type": ["string", "null"]},
+        "head": {"type": ["string", "null"]}
+      }
+    }
+  }
+}
