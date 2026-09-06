@@ -188,15 +188,27 @@ codex plugin list --marketplace project-workflow
 
 这条路径中，npm 负责下载和解包源码，`codex plugin marketplace add` 负责把解包目录注册给 Codex。仓库已经包含 `package.json`，也可以在仓库目录执行 `npm pack` 生成可分发的 tarball。
 
-### 方式五：npm registry 安装（发布后）
+### 方式五：npm registry 安装（维护者先发布）
 
-当前包尚未发布到 npm registry；发布者完成 `npm login` 后执行：
+当前包的 npm registry 发布状态可以这样检查：
+
+```powershell
+npm view codex-project-factory version
+```
+
+维护者需要先登录 npm 并发布包：
 
 ```powershell
 npm publish --access public
 ```
 
-发布完成后，用户即可使用标准 registry 安装：
+发布完成后，先确认 registry 已返回版本号：
+
+```powershell
+npm view codex-project-factory version
+```
+
+确认成功后，用户即可使用标准 registry 安装：
 
 ```powershell
 $installRoot = Join-Path $env:TEMP "codex-project-factory-npm"
@@ -206,11 +218,7 @@ codex plugin marketplace add (Join-Path $installRoot "node_modules\codex-project
 codex plugin add codex-project-factory@project-workflow
 ```
 
-在 registry 发布前，下面的命令会返回 `E404`，不要把它当作当前可用入口：
-
-```text
-npm install codex-project-factory
-```
+在 registry 返回版本号之前，请使用上面的 GitHub source npm 安装方式；registry 包发布需要维护者的 npm 账号和权限。
 
 更新插件时，重新执行对应下载步骤，然后执行：
 
