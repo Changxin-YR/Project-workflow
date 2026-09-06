@@ -131,9 +131,35 @@ codex plugin list --marketplace project-workflow
 
 这种方式适合需要审阅或修改 Skill 的团队。修改仓库后重新执行 `codex plugin marketplace upgrade project-workflow`，再重启 Codex Desktop。
 
-### 方式三：通过 npm 下载源码包
+### 方式三：通过 npm 安装 GitHub 源（现在可用）
 
-Codex 当前没有把 npm registry 作为原生插件安装源；npm 适合用来下载这份 GitHub 包，再把解包目录接入 marketplace。无需 npm 账号即可执行：
+Codex 当前没有把 npm registry 作为原生插件安装源。npm 安装完成后，需要把安装目录注册为 Codex marketplace，再安装插件。下面命令使用独立临时目录，不会修改你的软件项目：
+
+PowerShell：
+
+```powershell
+$installRoot = Join-Path $env:TEMP "codex-project-factory-npm"
+Remove-Item -Recurse -Force $installRoot -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force $installRoot | Out-Null
+npm install --prefix $installRoot github:Changxin-YR/Project-workflow
+codex plugin marketplace add (Join-Path $installRoot "node_modules\codex-project-factory")
+codex plugin add codex-project-factory@project-workflow
+codex plugin list --marketplace project-workflow
+```
+
+macOS/Linux：
+
+```bash
+install_root="$(mktemp -d)"
+npm install --prefix "$install_root" github:Changxin-YR/Project-workflow
+codex plugin marketplace add "$install_root/node_modules/codex-project-factory"
+codex plugin add codex-project-factory@project-workflow
+codex plugin list --marketplace project-workflow
+```
+
+### 方式四：通过 npm 下载源码包
+
+如果你需要离线保存 tarball 或交给团队内部镜像，可以用 `npm pack` 下载并解包。无需 npm 账号即可执行：
 
 ```powershell
 $installRoot = Join-Path $env:TEMP "codex-project-factory-install"
@@ -160,7 +186,27 @@ codex plugin add codex-project-factory@project-workflow
 codex plugin list --marketplace project-workflow
 ```
 
-这条路径不需要 npm 账号，npm 只负责从 GitHub 下载并打包源码；`codex plugin marketplace add` 负责把解包目录注册给 Codex。仓库已经包含 `package.json`，也可以在仓库目录执行 `npm pack` 生成可分发的 tarball。当前版本尚未发布到 npm registry，因此下面的命令目前不可用：
+这条路径中，npm 负责下载和解包源码，`codex plugin marketplace add` 负责把解包目录注册给 Codex。仓库已经包含 `package.json`，也可以在仓库目录执行 `npm pack` 生成可分发的 tarball。
+
+### 方式五：npm registry 安装（发布后）
+
+当前包尚未发布到 npm registry；发布者完成 `npm login` 后执行：
+
+```powershell
+npm publish --access public
+```
+
+发布完成后，用户即可使用标准 registry 安装：
+
+```powershell
+$installRoot = Join-Path $env:TEMP "codex-project-factory-npm"
+New-Item -ItemType Directory -Force $installRoot | Out-Null
+npm install --prefix $installRoot codex-project-factory
+codex plugin marketplace add (Join-Path $installRoot "node_modules\codex-project-factory")
+codex plugin add codex-project-factory@project-workflow
+```
+
+在 registry 发布前，下面的命令会返回 `E404`，不要把它当作当前可用入口：
 
 ```text
 npm install codex-project-factory

@@ -48,6 +48,7 @@ INIT -> REQUIREMENT_ANALYSIS -> REQUIREMENT_INTERVIEW -> WAITING_FOR_USER
 | `python -m compileall -q scripts` | PASS |
 | plugin creator `validate_plugin.py .` | PASS |
 | `npm pack --dry-run --json` | PASS, 40 files; no Python cache or workspace-only files |
+| real local tarball `npm install --ignore-scripts` | PASS; manifest and project-factory Skill present under `node_modules/codex-project-factory` |
 | `git_delivery.py inspect --repo .` | `repositoryDetected=true`, `remoteDetected=true`, branch `main` |
 | `git_delivery.py scan --repo .` | PASS, no findings |
 | Real remote Push | PASS for core delivery commit `20b62f9`; later documentation commit is retained locally when the network is unavailable |
@@ -74,4 +75,4 @@ codex plugin marketplace add .\package
 codex plugin add codex-project-factory@project-workflow
 ```
 
-npm registry 尚未发布此包；当前仓库已可通过 `npm pack` 生成干净的分发 tarball。
+npm registry 尚未发布此包；当前仓库已可通过 `npm install github:Changxin-YR/Project-workflow` 安装源码，或通过 `npm pack` 生成干净的分发 tarball。安装后将 `node_modules/codex-project-factory` 注册为 Codex marketplace，再执行 `codex plugin add codex-project-factory@project-workflow`。
