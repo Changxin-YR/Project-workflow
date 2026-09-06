@@ -51,7 +51,7 @@ INIT -> REQUIREMENT_ANALYSIS -> REQUIREMENT_INTERVIEW -> WAITING_FOR_USER
 | real local tarball `npm install --ignore-scripts` | PASS; manifest and project-factory Skill present under `node_modules/codex-project-factory` |
 | `git_delivery.py inspect --repo .` | `repositoryDetected=true`, `remoteDetected=true`, branch `main` |
 | `git_delivery.py scan --repo .` | PASS, no findings |
-| Real remote Push | PASS for core delivery commit `20b62f9`; later documentation commit is retained locally when the network is unavailable |
+| Real remote Push | PASS; remote `main` verified at `8cfa2b2` with `git ls-remote` |
 
 ## 六、当前可用性与限制
 
