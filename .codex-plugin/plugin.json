@@ -1,0 +1,24 @@
+{
+  "name": "codex-project-factory",
+  "version": "1.0.0",
+  "description": "An opt-in Codex workflow that turns a confirmed software idea into tested, reviewable, and safely delivered code.",
+  "skills": "./skills/",
+  "author": {
+    "name": "Codex Project Factory"
+  },
+  "interface": {
+    "displayName": "Codex Project Factory",
+    "shortDescription": "Resumable software-project delivery workflow",
+    "longDescription": "Run a confirmed software project from requirements through architecture, implementation, acceptance, and a verified Git Delivery Gate with durable state and recovery.",
+    "developerName": "Codex Project Factory",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Workflow",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "使用项目工作流",
+      "/project-factory"
+    ]
+  }
+}

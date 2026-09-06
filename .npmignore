@@ -1,0 +1,7 @@
+.superpowers/
+scripts/__pycache__/
+小说工作流/
+.repo-booking-rag.md
+*.pyc
+.git/
+.github/
