@@ -2,7 +2,7 @@
 
 ## 一、本次结论
 
-插件实现验证通过。当前工作区本身不是 Git 仓库，因此本次没有创建提交、配置远程或执行 Push；Git Delivery 的三种仓库状态和阻断/恢复逻辑由临时仓库测试覆盖。
+插件实现和分发验证通过。仓库已绑定 `origin`，核心实现已安全推送到 `main`；Git Delivery 的三种仓库状态和阻断/恢复逻辑由临时仓库测试覆盖。
 
 ## 二、实际修改与新增文件
 
@@ -48,13 +48,13 @@ INIT -> REQUIREMENT_ANALYSIS -> REQUIREMENT_INTERVIEW -> WAITING_FOR_USER
 | `python -m compileall -q scripts` | PASS |
 | plugin creator `validate_plugin.py .` | PASS |
 | `npm pack --dry-run --json` | PASS, 40 files; no Python cache or workspace-only files |
-| `git_delivery.py inspect --repo .` | `repositoryDetected=false` |
+| `git_delivery.py inspect --repo .` | `repositoryDetected=true`, `remoteDetected=true`, branch `main` |
 | `git_delivery.py scan --repo .` | PASS, no findings |
-| Real remote Push | Not executed; current package root has no Git repository or remote |
+| Real remote Push | PASS for core delivery commit `20b62f9`; later documentation commit is retained locally when the network is unavailable |
 
 ## 六、当前可用性与限制
 
-插件可安装并按显式触发运行。目标软件项目在进入最终 Git Delivery 前必须由用户准备 Git 仓库和远程地址；远程仓库创建和凭据操作保持人工确认。插件包自身当前没有 Git 提交，这是环境事实，不是测试结果。
+插件可安装并按显式触发运行。目标软件项目在进入最终 Git Delivery 前必须由用户准备 Git 仓库和远程地址；远程仓库创建和凭据操作保持人工确认。当前插件仓库使用 `main` 分支并跟踪 `origin/main`。
 
 ## 七、Codex 部署入口
 
@@ -62,6 +62,7 @@ INIT -> REQUIREMENT_ANALYSIS -> REQUIREMENT_INTERVIEW -> WAITING_FOR_USER
 
 ```powershell
 codex plugin marketplace add https://github.com/Changxin-YR/Project-workflow.git --ref main
+codex plugin add codex-project-factory@project-workflow
 ```
 
 npm 下载入口：
@@ -70,6 +71,7 @@ npm 下载入口：
 $archive = npm pack github:Changxin-YR/Project-workflow --silent
 tar -xzf $archive
 codex plugin marketplace add .\package
+codex plugin add codex-project-factory@project-workflow
 ```
 
 npm registry 尚未发布此包；当前仓库已可通过 `npm pack` 生成干净的分发 tarball。
