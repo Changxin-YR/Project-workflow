@@ -17,6 +17,7 @@ from git_delivery import (
     commit_group,
     final_test_gate,
     inspect_repository,
+    main,
     prerequisites_passed,
     push,
     resume_git_delivery,
@@ -134,6 +135,55 @@ def test_remote_validation_and_push_failure_recovery():
         assert resumed["gitDelivery"]["repositoryDetected"] is True
     finally:
         raw.cleanup()
+
+
+def test_deliver_end_to_end_persists_final_delivery():
+    """Full `deliver` path: plan -> commit -> final test -> Push -> state write-back."""
+    raw, repo = init_repo()
+    remote_raw = tempfile.TemporaryDirectory()
+    try:
+        state_path = repo / "workflow" / "state.json"
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        save_state(state_path, load_state(state_path))
+        (repo / ".gitignore").write_text("workflow/*.log\n", encoding="utf-8")
+        evidence_path = repo / "workflow" / "final-evidence.json"
+        evidence_path.write_text(json.dumps({
+            "fullAcceptance": "PASS", "build": True, "unit": "PASS", "integration": "PASS",
+            "e2e": "PASS", "coreCoverage": "100%", "p0Bugs": 0, "p1Bugs": 0,
+            "blockingSecurity": False,
+        }), encoding="utf-8")
+        bare = Path(remote_raw.name) / "remote.git"
+        git(repo, "init", "--bare", str(bare))
+        git(repo, "remote", "add", "origin", bare.as_uri())
+        local_head = run_git(repo, "rev-parse", "HEAD", check=False)
+        assert local_head.returncode != 0, "precondition: the delivery repo must start without commits"
+
+        assert main(["deliver", "--repo", str(repo), "--evidence", str(evidence_path)]) == 0
+
+        state = load_state(state_path)
+        assert state["phase"] == "FINAL_DELIVERY"
+        assert state["status"] == PASS
+
+        delivery = state["gitDelivery"]
+        assert delivery["push"] == PASS
+        assert delivery["securityScan"] == PASS
+        assert delivery["commitPlan"] == PASS
+        assert delivery["commitsCompleted"] is True
+        assert delivery["finalTest"] == PASS
+        assert delivery["remoteVerify"] == PASS
+        assert delivery["branch"] == run_git(repo, "branch", "--show-current").stdout.strip()
+        assert delivery["head"] == run_git(repo, "rev-parse", "HEAD").stdout.strip()
+        assert delivery["remoteUrl"] == bare.as_uri()
+
+        assert (repo / "workflow" / "git-commit-plan.md").exists()
+        # The gate writes the post-Push delivery state back after committing, so the
+        # only file allowed to stay dirty is the state file itself.
+        dirty = [line[3:] for line in run_git(repo, "status", "--short").stdout.splitlines() if len(line) > 3]
+        assert dirty == ["workflow/state.json"], dirty
+        assert run_git(repo, "rev-parse", "HEAD").stdout.strip() == run_git(bare, "rev-parse", "HEAD").stdout.strip()
+    finally:
+        raw.cleanup()
+        remote_raw.cleanup()
 
 
 def test_state_waiting_recovery():
