@@ -322,7 +322,7 @@ def main(argv=None) -> int:
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["passed"] else 2
     if args.command == "plan":
-        files = [Path(item) for item in facts.get("status", "").splitlines() if len(item) > 3 for item in [item[3:]]]
+        files = [Path(item[3:]) for item in facts.get("status", "").splitlines() if len(item) > 3]
         plan = build_commit_plan(repo, files, _read_json(args.manifest) if args.manifest else None)
         write_commit_plan(repo / "workflow" / "git-commit-plan.md", plan)
         print(json.dumps(plan, ensure_ascii=False, indent=2))
@@ -346,17 +346,14 @@ def main(argv=None) -> int:
         save_state(state_path, state)
         print(json.dumps({"status": BLOCKED, "findings": scan["findings"]}, ensure_ascii=False))
         return 2
-    files = [Path(item) for item in facts["status"].splitlines() if len(item) > 3 for item in [item[3:]]]
+    files = [Path(item[3:]) for item in facts["status"].splitlines() if len(item) > 3]
     plan_path = repo / "workflow" / "git-commit-plan.md"
-    plan = build_commit_plan(repo, files, _read_json(args.manifest) if args.manifest else None)
-    write_commit_plan(plan_path, plan)
-    facts = inspect_repository(repo)
-    files = [Path(item) for item in facts["status"].splitlines() if len(item) > 3 for item in [item[3:]]]
     plan = build_commit_plan(repo, files, _read_json(args.manifest) if args.manifest else None)
     write_commit_plan(plan_path, plan)
     if args.dry_run:
         print(json.dumps({"status": "DRY_RUN", "plan": plan, "push": push(repo, dry_run=True)}, ensure_ascii=False, indent=2))
         return 0
+    commit_statuses = []
     for group in plan:
         result = commit_group(repo, group)
         if result["status"] not in {PASS, "NOOP"}:
@@ -364,15 +361,31 @@ def main(argv=None) -> int:
             save_state(state_path, state)
             print(json.dumps(result, ensure_ascii=False))
             return 2
+        commit_statuses.append(result["status"])
     if not final_test_gate(evidence):
         state.update({"phase": "GIT_DELIVERY", "status": FAILED_VALIDATION, "failedGate": "FINAL_TEST"})
         save_state(state_path, state)
         print(json.dumps({"status": FAILED_VALIDATION}, ensure_ascii=False))
         return 2
     result = push(repo)
+    head = run_git(repo, "rev-parse", "HEAD", check=False)
+    delivery = state.setdefault("gitDelivery", {})
+    delivery.update({
+        "securityScan": PASS,
+        "commitPlan": PASS,
+        "commitsCompleted": PASS in commit_statuses,
+        "finalTest": PASS,
+        "remoteVerify": PASS,
+        "push": result["status"],
+        "branch": result.get("branch"),
+        "head": head.stdout.strip() if head.returncode == 0 else None,
+    })
+    if result["status"] == PASS:
+        validation = result.get("remote") or {}
+        if validation.get("url"):
+            delivery["remoteUrl"] = validation["url"]
     state["phase"] = "FINAL_DELIVERY"
     state["status"] = result["status"]
-    state.setdefault("gitDelivery", {})["push"] = result["status"]
     save_state(state_path, state)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["status"] == PASS else 4
